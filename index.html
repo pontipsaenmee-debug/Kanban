@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f5f3">
+  <title>ศูนย์ติดตามงานบุคคล</title>
+  <style>
+    :root {
+      --page: #f5f5f3;
+      --surface: #ffffff;
+      --surface-muted: #efefec;
+      --text: #171717;
+      --muted: #686868;
+      --line: #d9d9d5;
+      --shadow: 0 12px 35px rgba(0, 0, 0, .06);
+      --accent: #171717;
+      --accent-text: #fff;
+      --danger: #8e2020;
+    }
+
+    :root[data-theme="dark"] {
+      --page: #141414;
+      --surface: #202020;
+      --surface-muted: #292929;
+      --text: #f5f5f1;
+      --muted: #b4b4ae;
+      --line: #3c3c39;
+      --shadow: 0 14px 38px rgba(0, 0, 0, .28);
+      --accent: #f5f5f1;
+      --accent-text: #171717;
+      --danger: #ffaaa1;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme]) { --page: #141414; --surface: #202020; --surface-muted: #292929; --text: #f5f5f1; --muted: #b4b4ae; --line: #3c3c39; --shadow: 0 14px 38px rgba(0,0,0,.28); --accent: #f5f5f1; --accent-text: #171717; --danger: #ffaaa1; }
+    }
+
+    * { box-sizing: border-box; }
+    body { margin: 0; min-width: 320px; background: var(--page); color: var(--text); font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    button, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .app { max-width: 1600px; margin: 0 auto; padding: 28px clamp(18px, 4vw, 62px) 54px; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin: 5px 0 38px; }
+    .eyebrow { color: var(--muted); font-size: .78rem; font-weight: 700; letter-spacing: .12em; margin: 0 0 7px; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 3.2rem); font-weight: 720; letter-spacing: -.055em; line-height: 1.06; }
+    .subtitle { color: var(--muted); font-size: 1rem; margin: 10px 0 0; }
+    .theme-toggle { appearance: none; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--text); min-height: 42px; padding: 0 15px; box-shadow: var(--shadow); white-space: nowrap; }
+    .theme-toggle:hover { background: var(--surface-muted); }
+    .board { display: grid; grid-template-columns: repeat(4, minmax(235px, 1fr)); gap: 18px; align-items: start; overflow-x: auto; padding: 2px 2px 20px; }
+    .column { background: var(--surface-muted); border: 1px solid var(--line); border-radius: 16px; min-height: 380px; padding: 14px; }
+    .column.drag-over { outline: 2px solid var(--text); outline-offset: 2px; }
+    .column-head { align-items: center; display: flex; justify-content: space-between; gap: 8px; margin-bottom: 14px; }
+    .column h2 { font-size: 1rem; margin: 0; letter-spacing: -.02em; }
+    .count { align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: 50%; display: inline-flex; font-size: .78rem; height: 25px; justify-content: center; min-width: 25px; color: var(--muted); }
+    .cards { min-height: 220px; display: grid; gap: 10px; }
+    .card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 3px 10px rgba(0,0,0,.025); padding: 15px; transition: transform .16s ease, box-shadow .16s ease; }
+    .card[draggable="true"] { cursor: grab; }
+    .card.dragging { opacity: .45; }
+    .card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+    .card-text { font-size: .98rem; line-height: 1.48; margin: 0 0 14px; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .card-actions { align-items: center; display: flex; gap: 7px; justify-content: flex-end; }
+    .icon-button { background: transparent; border: 1px solid transparent; border-radius: 8px; color: var(--muted); min-height: 34px; min-width: 34px; padding: 4px 8px; }
+    .icon-button:hover { border-color: var(--line); color: var(--text); background: var(--surface-muted); }
+    .delete:hover { color: var(--danger); }
+    .move-button { display: none; font-size: 1.1rem; font-weight: 700; }
+    .add-card { background: transparent; border: 1px dashed var(--line); border-radius: 10px; color: var(--muted); margin-top: 12px; min-height: 43px; padding: 8px 12px; text-align: left; width: 100%; }
+    .add-card:hover { background: var(--surface); border-color: var(--muted); color: var(--text); }
+    dialog { background: var(--surface); border: 1px solid var(--line); border-radius: 17px; box-shadow: 0 24px 80px rgba(0,0,0,.32); color: var(--text); max-width: min(500px, calc(100vw - 32px)); padding: 0; width: 100%; }
+    dialog::backdrop { background: rgba(0,0,0,.48); }
+    .dialog-content { padding: 24px; }
+    .dialog-content h2 { font-size: 1.35rem; letter-spacing: -.03em; margin: 0 0 20px; }
+    label { display: block; font-size: .9rem; font-weight: 650; margin: 0 0 7px; }
+    textarea, select { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; color: var(--text); outline: none; padding: 11px 12px; width: 100%; }
+    textarea:focus, select:focus { border-color: var(--text); box-shadow: 0 0 0 3px color-mix(in srgb, var(--text) 12%, transparent); }
+    textarea { min-height: 120px; resize: vertical; }
+    .field { margin-bottom: 15px; }
+    .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 21px; }
+    .button { border: 1px solid var(--line); border-radius: 9px; min-height: 42px; padding: 8px 14px; }
+    .button.secondary { background: transparent; color: var(--text); }
+    .button.primary { background: var(--accent); color: var(--accent-text); border-color: var(--accent); font-weight: 650; }
+    .empty { color: var(--muted); font-size: .9rem; margin: 5px 2px; }
+    @media (max-width: 760px) {
+      .app { padding-top: 18px; }
+      header { margin-bottom: 25px; }
+      .subtitle { font-size: .92rem; }
+      .board { grid-template-columns: 1fr; overflow: visible; }
+      .column { min-height: auto; }
+      .cards { min-height: 32px; }
+      .card { padding: 16px; }
+      .move-button { display: inline-flex; align-items: center; justify-content: center; }
+      .move-button:disabled { cursor: not-allowed; opacity: .27; }
+    }
+    @media (max-width: 420px) { header { gap: 14px; } .theme-toggle { padding: 0 11px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <p class="eyebrow">HR workspace</p>
+        <h1>ศูนย์ติดตามงานบุคคล</h1>
+        <p class="subtitle">จัดลำดับคำขอ พนักงาน และงานเอกสารให้เห็นภาพเดียวกัน</p>
+      </div>
+      <button class="theme-toggle" id="themeToggle" type="button" aria-label="สลับโหมดสี">◐ โหมดมืด</button>
+    </header>
+    <section class="board" id="board" aria-label="กระดานติดตามงาน HR"></section>
+  </main>
+
+  <dialog id="cardDialog" aria-labelledby="dialogTitle">
+    <form class="dialog-content" id="cardForm">
+      <h2 id="dialogTitle">เพิ่มงาน</h2>
+      <div class="field"><label for="cardText">รายละเอียดงาน</label><textarea id="cardText" required maxlength="1000" placeholder="เช่น ติดตามเอกสารการเริ่มงานของพนักงานใหม่"></textarea></div>
+      <div class="field"><label for="cardColumn">สถานะ</label><select id="cardColumn"></select></div>
+      <div class="dialog-actions">
+        <button class="button secondary" type="button" id="cancelDialog">ยกเลิก</button>
+        <button class="button primary" type="submit">บันทึก</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = 'hr-kanban-board-v1';
+      const THEME_KEY = 'hr-kanban-theme-v1';
+      // แก้ชื่อคอลัมน์สำหรับขั้นตอนงาน HR ได้ตรงนี้เลย
+      const columns = [
+        { id: 'incoming', name: 'คำขอและงานเข้า' },
+        { id: 'waiting', name: 'รอข้อมูล / อนุมัติ' },
+        { id: 'progress', name: 'กำลังดำเนินการ' },
+        { id: 'complete', name: 'ปิดงานและบันทึกแล้ว' }
+      ];
+      const board = document.getElementById('board');
+      const dialog = document.getElementById('cardDialog');
+      const form = document.getElementById('cardForm');
+      const textInput = document.getElementById('cardText');
+      const columnInput = document.getElementById('cardColumn');
+      const title = document.getElementById('dialogTitle');
+      const themeToggle = document.getElementById('themeToggle');
+      let editingId = null;
+      let draggedId = null;
+      let cards = loadCards();
+
+      function loadCards() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+          return Array.isArray(saved) ? saved.filter(card => card && card.id && card.column && typeof card.text === 'string') : [];
+        } catch { return []; }
+      }
+      function saveCards() { localStorage.setItem(STORAGE_KEY, JSON.stringify(cards)); }
+      function columnName(id) { return columns.find(column => column.id === id)?.name || ''; }
+      function uid() { return `${Date.now()}-${Math.random().toString(16).slice(2)}`; }
+      function createButton(label, className, action, id, disabled = false) {
+        const button = document.createElement('button');
+        button.type = 'button'; button.className = className; button.textContent = label;
+        button.dataset.action = action; button.dataset.id = id; button.disabled = disabled;
+        return button;
+      }
+      function render() {
+        board.replaceChildren();
+        for (const [index, column] of columns.entries()) {
+          const columnEl = document.createElement('article');
+          columnEl.className = 'column'; columnEl.dataset.column = column.id;
+          const head = document.createElement('div'); head.className = 'column-head';
+          const heading = document.createElement('h2'); heading.textContent = column.name;
+          const count = document.createElement('span'); count.className = 'count';
+          const inColumn = cards.filter(card => card.column === column.id); count.textContent = inColumn.length;
+          head.append(heading, count);
+          const list = document.createElement('div'); list.className = 'cards'; list.dataset.column = column.id;
+          if (!inColumn.length) { const empty = document.createElement('p'); empty.className = 'empty'; empty.textContent = 'ยังไม่มีงาน'; list.append(empty); }
+          inColumn.forEach(card => list.append(createCard(card, index)));
+          const add = document.createElement('button'); add.type = 'button'; add.className = 'add-card'; add.dataset.action = 'add'; add.dataset.column = column.id; add.textContent = '+ เพิ่มงานในคอลัมน์นี้';
+          columnEl.append(head, list, add); board.append(columnEl);
+        }
+      }
+      function createCard(card, columnIndex) {
+        const element = document.createElement('article'); element.className = 'card'; element.draggable = true; element.dataset.id = card.id;
+        const body = document.createElement('p'); body.className = 'card-text'; body.textContent = card.text;
+        const actions = document.createElement('div'); actions.className = 'card-actions';
+        actions.append(
+          createButton('←', 'icon-button move-button', 'move-left', card.id, columnIndex === 0),
+          createButton('แก้ไข', 'icon-button', 'edit', card.id),
+          createButton('ลบ', 'icon-button delete', 'delete', card.id),
+          createButton('→', 'icon-button move-button', 'move-right', card.id, columnIndex === columns.length - 1)
+        );
+        element.append(body, actions); return element;
+      }
+      function openDialog(columnId, card = null) {
+        editingId = card?.id || null; title.textContent = card ? 'แก้ไขงาน' : 'เพิ่มงาน';
+        textInput.value = card?.text || ''; columnInput.replaceChildren();
+        columns.forEach(column => { const option = new Option(column.name, column.id, false, (card?.column || columnId) === column.id); columnInput.add(option); });
+        dialog.showModal(); textInput.focus();
+      }
+      function moveCard(id, direction) {
+        const card = cards.find(item => item.id === id); if (!card) return;
+        const current = columns.findIndex(column => column.id === card.column); const next = current + direction;
+        if (next < 0 || next >= columns.length) return;
+        card.column = columns[next].id; saveCards(); render();
+      }
+      function setTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        themeToggle.textContent = theme === 'dark' ? '☀ โหมดสว่าง' : '◐ โหมดมืด';
+        document.querySelector('meta[name="theme-color"]').content = theme === 'dark' ? '#141414' : '#f5f5f3';
+      }
+      const storedTheme = localStorage.getItem(THEME_KEY);
+      setTheme(storedTheme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+      themeToggle.addEventListener('click', () => { const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'; localStorage.setItem(THEME_KEY, next); setTheme(next); });
+      board.addEventListener('click', event => {
+        const button = event.target.closest('button[data-action]'); if (!button) return;
+        const { action, id, column } = button.dataset;
+        if (action === 'add') openDialog(column);
+        if (action === 'edit') { const card = cards.find(item => item.id === id); if (card) openDialog(card.column, card); }
+        if (action === 'delete') { const card = cards.find(item => item.id === id); if (card && confirm(`ลบงาน “${card.text.slice(0, 70)}” ใช่ไหม?\nการลบนี้กู้คืนไม่ได้`)) { cards = cards.filter(item => item.id !== id); saveCards(); render(); } }
+        if (action === 'move-left') moveCard(id, -1);
+        if (action === 'move-right') moveCard(id, 1);
+      });
+      board.addEventListener('dragstart', event => { const card = event.target.closest('.card'); if (!card) return; draggedId = card.dataset.id; card.classList.add('dragging'); event.dataTransfer.effectAllowed = 'move'; });
+      board.addEventListener('dragend', event => { event.target.closest('.card')?.classList.remove('dragging'); document.querySelectorAll('.column').forEach(column => column.classList.remove('drag-over')); draggedId = null; });
+      board.addEventListener('dragover', event => { const column = event.target.closest('.column'); if (!column || !draggedId) return; event.preventDefault(); column.classList.add('drag-over'); event.dataTransfer.dropEffect = 'move'; });
+      board.addEventListener('dragleave', event => { const column = event.target.closest('.column'); if (column && !column.contains(event.relatedTarget)) column.classList.remove('drag-over'); });
+      board.addEventListener('drop', event => { const column = event.target.closest('.column'); if (!column || !draggedId) return; event.preventDefault(); const card = cards.find(item => item.id === draggedId); if (card) { card.column = column.dataset.column; saveCards(); render(); } });
+      form.addEventListener('submit', event => { event.preventDefault(); const text = textInput.value.trim(); if (!text) return; if (editingId) { const card = cards.find(item => item.id === editingId); if (card) { card.text = text; card.column = columnInput.value; } } else { cards.push({ id: uid(), text, column: columnInput.value }); } saveCards(); dialog.close(); render(); });
+      document.getElementById('cancelDialog').addEventListener('click', () => dialog.close());
+      render();
+    })();
+  </script>
+</body>
+</html>
